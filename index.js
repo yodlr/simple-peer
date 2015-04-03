@@ -31,10 +31,16 @@ inherits(Peer, stream.Duplex)
  * A WebRTC peer connection.
  * @param {Object} opts
  */
-function Peer (opts) {
+function Peer (opts, p2p) {
   var self = this
   if (!(self instanceof Peer)) return new Peer(opts)
   if (!opts) opts = {}
+
+  if (p2p) {
+    RTCIceCandidate = p2p.RTCIceCandidate;
+    RTCSessionDescription = p2p.RTCSessionDescription;
+    RTCPeerConnection = p2p.RTCPeerConnection;
+  }
 
   opts.allowHalfOpen = false
   stream.Duplex.call(self, opts)
@@ -71,7 +77,7 @@ function Peer (opts) {
     self._setupData({ channel: self._pc.createDataChannel(self.channelName) })
     self._pc.onnegotiationneeded = once(self._createOffer.bind(self))
     // Firefox does not trigger "negotiationneeded"; this is a workaround
-    if (window.mozRTCPeerConnection) {
+    if (p2p || window.mozRTCPeerConnection) {
       setTimeout(function () {
         self._pc.onnegotiationneeded()
       }, 0)
